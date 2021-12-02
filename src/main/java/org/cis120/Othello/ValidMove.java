@@ -5,6 +5,7 @@ import java.util.LinkedList;
 public class ValidMove implements Comparable<ValidMove>{
     private final int x;
     private final int y;
+    //TODO: linked hash set?
     private LinkedList<int[]> flippedDisks;
     public ValidMove(int xParam, int yParam, LinkedList<int[]> flippedParam)
     {

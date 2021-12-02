@@ -4,28 +4,45 @@ import java.util.LinkedList;
 import java.util.TreeSet;
 
 //used for keeping track of the current turn or what pieces are on the board
-//empty squares are represented by null in order to maintain logical consistency between the
-//enum representing a player and the enum representing a piece on the board
 //public so that it can be referenced from anywhere and the representation of the pieces and the
 //players is consistent
 enum PlayerColor
 {
-    BLACK, WHITE
+    BLACK, WHITE, EMPTY
 }
 public class Othello {
     //x,y format
     private PlayerColor[][] board;
+
+    //stores current turn using player color enum
     private PlayerColor currentTurn;
 
+    //keeps track of points for black and white
     private int blackPoints;
     private int whitePoints;
 
+    //stores valid moves for both players
     private TreeSet<ValidMove> blackValidMoves;
     private TreeSet<ValidMove> whiteValidMoves;
 
     //Othello constructor
     public Othello() {
         reset();
+    }
+
+    /**
+     * resets the game state to start a new game.
+     **/
+    public void reset() {
+        board = new PlayerColor[8][8];
+        currentTurn = PlayerColor.BLACK;
+        blackPoints = 2;
+        whitePoints = 2;
+        blackValidMoves = new TreeSet<>();
+        whiteValidMoves = new TreeSet<>();
+        initBoard();
+        blackValidMoves = generateValidMoves(PlayerColor.BLACK);
+        whiteValidMoves = generateValidMoves(PlayerColor.WHITE);
     }
 
     //Sets up the starting board state
@@ -35,7 +52,7 @@ public class Othello {
         {
             for (int j = 0; j < 8; j++)
             {
-                board[i][j] = null;
+                board[i][j] = PlayerColor.EMPTY;
             }
         }
         board[3][3] = PlayerColor.BLACK;
@@ -44,6 +61,20 @@ public class Othello {
         board[4][4] = PlayerColor.BLACK;
     }
 
+    private void currentTurnFlip()
+    {
+        if (currentTurn == PlayerColor.BLACK)
+        {
+            currentTurn = PlayerColor.WHITE;
+        }
+        else
+        {
+            currentTurn = PlayerColor.BLACK;
+        }
+    }
+
+    //generates all valid moves for one player
+    //specifically only checks squares that are adjacent to placed disks for greater efficiency
     private TreeSet<ValidMove> generateValidMoves(PlayerColor player)
     {
         TreeSet<ValidMove> moves = new TreeSet<>();
@@ -51,13 +82,13 @@ public class Othello {
         {
             for (int j = 0 ; j < board[0].length; j++)
             {
-                if (board[i][j] != null)
+                if (board[i][j] != PlayerColor.EMPTY)
                 {
                     for (int k = -1; k < 2; k++)
                     {
                         for (int l = -1; l < 2; l++)
                         {
-                            if (k == 0 && l == 0 || board[i + k][j + l] != null)
+                            if (k == 0 && l == 0 || board[i + k][j + l] != PlayerColor.EMPTY)
                             {
                                 continue;
                             }
@@ -75,44 +106,7 @@ public class Othello {
         return moves;
     }
 
-    /**
-     * playTurn allows players to play a turn. Returns true if the move is
-     * successful and false if a player tries to play in a location that is
-     * taken or after the game has ended. If the turn is successful and the game
-     * has not ended, the player is changed. If the turn is unsuccessful or the
-     * game has ended, the player is not changed.
-     *
-     * @param x column to play in
-     * @param y row to play in
-     * @param player move color
-     * @return whether the turn was successful
-     **/
-    public boolean playTurn(int x, int y, PlayerColor player) {
-        TreeSet<ValidMove> moves;
-        if (player == PlayerColor.BLACK)
-        {
-            moves = blackValidMoves;
-        }
-        else
-        {
-            moves = whiteValidMoves;
-        }
-        ValidMove move = getValidMove(moves, x, y);
-        if (move != null)
-        {
-            board[x][y] = player;
-            LinkedList<int[]> flipped = move.getFlippedDisks();
-            for (int[] disk : flipped)
-            {
-                board[disk[0]][disk[1]] = player;
-            }
-            blackValidMoves = generateValidMoves(PlayerColor.BLACK);
-            whiteValidMoves = generateValidMoves(PlayerColor.WHITE);
-            return true;
-        }
-        return false;
-    }
-
+    //gets a move from a valid moves treeset
     private ValidMove getValidMove(TreeSet<ValidMove> moves, int x, int y)
     {
         for (ValidMove move : moves)
@@ -125,10 +119,11 @@ public class Othello {
         return null;
     }
 
+    //checks if a move is valid using raycast helper
     private LinkedList<int[]> checkMove(int x, int y, PlayerColor player)
     {
         LinkedList<int[]> flipped = new LinkedList<>();
-        if (board[x][y] == null)
+        if (board[x][y] == PlayerColor.EMPTY)
         {
             for (int i = -1; i < 2; i++)
             {
@@ -149,9 +144,9 @@ public class Othello {
     //Helper function to cast a ray over the board to figure out if a certain direction is valid
     //i.e. will result in a valid "flanking maneuver"
     private LinkedList<int[]> rayCast(int x, int y, int[] ray, PlayerColor player,
-                                     LinkedList<int[]> rayQueue)
+                                      LinkedList<int[]> rayQueue)
     {
-        if (x > 7 || y > 7 || x < 0 || y < 0 || board[x][y] == null)
+        if (x > 7 || y > 7 || x < 0 || y < 0 || board[x][y] == PlayerColor.EMPTY)
         {
             return new LinkedList<>();
         }
@@ -166,6 +161,70 @@ public class Othello {
         }
     }
 
+    /**
+     * playTurn allows players to play a turn. Returns true if the move is
+     * successful and false if a player tries to play in a location that is
+     * taken or after the game has ended. If the turn is successful and the game
+     * has not ended, the player is changed. If the turn is unsuccessful or the
+     * game has ended, the player is not changed.
+     *
+     * @param x column to play in
+     * @param y row to play in
+     * @param player move color
+     * @return whether the turn was successful
+     **/
+    public boolean playTurn(int x, int y, PlayerColor player) {
+        TreeSet<ValidMove> moves;
+        if (player!=currentTurn)
+        {
+            throw new IllegalArgumentException();
+        }
+        if (player == PlayerColor.BLACK)
+        {
+            moves = blackValidMoves;
+        }
+        else
+        {
+            moves = whiteValidMoves;
+        }
+        if (checkWinner() != null)
+        {
+            System.out.println("WINNER");
+            return false;
+        }
+        if (moves.isEmpty())
+        {
+            currentTurnFlip();
+            return false;
+        }
+        ValidMove move = getValidMove(moves, x, y);
+        if (move != null)
+        {
+            board[x][y] = player;
+            LinkedList<int[]> flipped = move.getFlippedDisks();
+            for (int[] disk : flipped)
+            {
+                board[disk[0]][disk[1]] = player;
+            }
+            if (player == PlayerColor.BLACK)
+            {
+                blackPoints += flipped.size() + 1;
+                whitePoints -= flipped.size();
+            }
+            else
+            {
+                whitePoints += flipped.size() + 1;
+                blackPoints -= flipped.size();
+            }
+            blackValidMoves = generateValidMoves(PlayerColor.BLACK);
+            whiteValidMoves = generateValidMoves(PlayerColor.WHITE);
+            currentTurnFlip();
+            return true;
+        }
+        return false;
+    }
+
+    /*
     private void updateValidMoves(TreeSet<ValidMove> moves, LinkedList<int[]> flipped, PlayerColor player)
     {
         moves.removeIf(move -> board[move.getX()][move.getY()] != null);
@@ -179,12 +238,7 @@ public class Othello {
                 }
             }
         }
-    }
-
-    public boolean turnValid(int x, int y, PlayerColor player)
-    {
-        return true;
-    }
+    }*/
 
     /**
      * checkWinner checks whether the game has reached a win condition.
@@ -192,36 +246,36 @@ public class Othello {
      *
      * @return 0 if nobody has won yet, 1 if player 1 has won, and 2 if player 2
      *         has won, 3 if the game hits stalemate
-     *
-    public int checkWinner() {
-        // Check horizontal win
-        for (int i = 0; i < board.length; i++) {
-            if (board[i][0] == board[i][1] &&
-                    board[i][1] == board[i][2] &&
-                    board[i][1] != 0) {
-                gameOver = true;
-                if (player1) {
-                    return 1;
-                } else {
-                    return 2;
-                }
+     **/
+    public PlayerColor checkWinner() {
+        if (blackValidMoves.isEmpty() && whiteValidMoves.isEmpty())
+        {
+            if (blackPoints > whitePoints)
+            {
+                return PlayerColor.BLACK;
+            }
+            else if (whitePoints > blackPoints)
+            {
+                return PlayerColor.WHITE;
+            }
+            else
+            {
+                return PlayerColor.EMPTY;
             }
         }
-
-        if (numTurns >= 9) {
-            gameOver = true;
-            return 3;
-        } else {
-            return 0;
-        }
+        return null;
     }
 
     /**
      * printGameState prints the current game state
      * for debugging.
-     * Since we are printing the i represents y and j represents x. reversed from all other for loops in the program
+     * Since we are printing the i represents y and j represents x. reversed from all other
+     * for loops in the program
+     * also prints potential moves for black and white depending on who's turn it is.
      */
     public void printGameState() {
+        System.out.println("B: " + blackPoints + ", W: " + whitePoints);
+        System.out.print(" ");
         for (int i = 0; i< board.length; i++)
         {
             System.out.print(i);
@@ -231,19 +285,29 @@ public class Othello {
             System.out.print(i);
             for (int j = 0; j < board[0].length; j++) {
                 PlayerColor space = board[j][i];
-                if (space == null)
+                if (space == PlayerColor.EMPTY)
                 {
-                    if (getValidMove(blackValidMoves, j, i) != null)
+                    if (currentTurn == PlayerColor.BLACK)
                     {
-                        System.out.print("*");
-                    }
-                    else if (getValidMove(whiteValidMoves, j, i) != null)
-                    {
-                        System.out.print("#");
+                        if (getValidMove(blackValidMoves, j, i) != null)
+                        {
+                            System.out.print("*");
+                        }
+                        else
+                        {
+                            System.out.print(".");
+                        }
                     }
                     else
                     {
-                        System.out.print(".");
+                        if (getValidMove(whiteValidMoves, j, i) != null)
+                        {
+                            System.out.print("#");
+                        }
+                        else
+                        {
+                            System.out.print(".");
+                        }
                     }
                 }
                 else if (space == PlayerColor.BLACK)
@@ -258,21 +322,6 @@ public class Othello {
             System.out.println();
         }
         System.out.println();
-    }
-
-    /**
-     * resets the game state to start a new game.
-     **/
-    public void reset() {
-        board = new PlayerColor[8][8];
-        currentTurn = PlayerColor.BLACK;
-        blackPoints = 0;
-        whitePoints = 0;
-        blackValidMoves = new TreeSet<>();
-        whiteValidMoves = new TreeSet<>();
-        initBoard();
-        blackValidMoves = generateValidMoves(PlayerColor.BLACK);
-        whiteValidMoves = generateValidMoves(PlayerColor.WHITE);
     }
 
     /**
@@ -321,7 +370,11 @@ public class Othello {
     public static void main(String[] args) {
         Othello o = new Othello();
         o.printGameState();
-        System.out.println(o.playTurn(2,4, PlayerColor.BLACK));
+        o.playTurn(2,4, PlayerColor.BLACK);
+        o.printGameState();
+        o.playTurn(4, 5, PlayerColor.WHITE);
+        o.printGameState();
+        o.playTurn(5, 4, PlayerColor.BLACK);
         o.printGameState();
     }
 }
