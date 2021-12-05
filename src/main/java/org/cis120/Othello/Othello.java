@@ -5,6 +5,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.TreeSet;
 
+//Player color enum
 //used for keeping track of the current turn or what pieces are on the board
 //public so that it can be referenced from anywhere and the representation of the pieces and the
 //players is consistent
@@ -13,6 +14,7 @@ enum PlayerColor
     BLACK, WHITE, EMPTY
 }
 public class Othello {
+    //board 2d array
     //x,y format
     private PlayerColor[][] board;
 
@@ -30,7 +32,9 @@ public class Othello {
     //Tracks game over state
     private boolean gameOver;
 
+    //true if next turn will be a pass turn and false otherwise
     private boolean pass;
+
     //output filestring
     private final String fileString = "output/output.txt";
 
@@ -72,6 +76,7 @@ public class Othello {
         board[4][4] = PlayerColor.WHITE;
     }
 
+    //Swaps the current turn variable to change over the turns
     private void currentTurnFlip()
     {
         if (currentTurn == PlayerColor.BLACK)
@@ -118,7 +123,7 @@ public class Othello {
         return moves;
     }
 
-    //gets a move from a valid moves treeset
+    //gets a move from a valid moves treeset based on coordinates given
     private ValidMove getValidMove(TreeSet<ValidMove> moves, int x, int y)
     {
         for (ValidMove move : moves)
@@ -132,6 +137,7 @@ public class Othello {
     }
 
     //checks if a move is valid using raycast helper
+    //takes a move and casts a ray out in all 8 directions to see if any disks are flipped when that move is played
     private LinkedHashSet<int[]> checkMove(int x, int y, PlayerColor player)
     {
         LinkedHashSet<int[]> flipped = new LinkedHashSet<>();
@@ -155,6 +161,7 @@ public class Othello {
 
     //Helper function to cast a ray over the board to figure out if a certain direction is valid
     //i.e. will result in a valid "flanking maneuver"
+    //aka will disks be flipped
     private LinkedHashSet<int[]> rayCast(int x, int y, int[] ray, PlayerColor player,
                                       LinkedHashSet<int[]> rayQueue)
     {
@@ -173,6 +180,23 @@ public class Othello {
         }
     }
 
+    //generates points from scratch
+    //used when loading a board
+    private void resetPoints()
+    {
+        blackPoints = 0;
+        whitePoints = 0;
+        for (PlayerColor[] spaces : board) {
+            for (PlayerColor space : spaces) {
+                if (space == PlayerColor.BLACK) {
+                    blackPoints++;
+                } else if (space == PlayerColor.WHITE) {
+                    whitePoints++;
+                }
+            }
+        }
+    }
+
     /**
      * playTurn allows players to play a turn. Returns true if the move is
      * successful and false if a player tries to play in a location that is
@@ -186,12 +210,16 @@ public class Othello {
      * @return whether the turn was successful
      **/
     public boolean playTurn(int x, int y, PlayerColor player) {
+        //print move coords for debugging
         System.out.println(x + ", " + y);
-        TreeSet<ValidMove> moves;
+        //also mostly for debugging
         if (player!=currentTurn)
         {
             throw new IllegalArgumentException();
         }
+
+        //loads correct valid moves tree
+        TreeSet<ValidMove> moves;
         if (player == PlayerColor.BLACK)
         {
             moves = blackValidMoves;
@@ -200,25 +228,40 @@ public class Othello {
         {
             moves = whiteValidMoves;
         }
-        if (checkWinner() != null || gameOver)
+
+        //kills play turn function if the game is over
+        if (gameOver || checkWinner() != null)
         {
             gameOver = true;
             return false;
         }
+
+        //pass fail-safe
+        //actual passing is handled at the end of the previous turn rather than when the play turn method is called on the passed turn
+        //this is here to make sure that any loaded state doesn't skip the passing radar
         if (moves.isEmpty())
         {
             currentTurnFlip();
             return false;
         }
+
+        //gets the valid move x y from the moves set
         ValidMove move = getValidMove(moves, x, y);
+
+        //if the move is valid
         if (move != null)
         {
+            //place the disk
             board[x][y] = player;
+
+            //flip all disks changed by the move
             LinkedList<int[]> flipped = move.getFlippedDisks();
             for (int[] disk : flipped)
             {
                 board[disk[0]][disk[1]] = player;
             }
+
+            //update points
             if (player == PlayerColor.BLACK)
             {
                 blackPoints += flipped.size() + 1;
@@ -229,9 +272,15 @@ public class Othello {
                 whitePoints += flipped.size() + 1;
                 blackPoints -= flipped.size();
             }
+
+            //update valid moves sets
             blackValidMoves = generateValidMoves(PlayerColor.BLACK);
             whiteValidMoves = generateValidMoves(PlayerColor.WHITE);
+
+            //flips turn
             currentTurnFlip();
+
+            //actual passing code
             if (player == PlayerColor.BLACK && whiteValidMoves.isEmpty())
             {
                 pass = true;
@@ -248,6 +297,7 @@ public class Othello {
             }
             return true;
         }
+        //if move is invalid an exception is thrown to be handled in GameBoard.java
         throw new IllegalArgumentException();
     }
 
@@ -255,8 +305,7 @@ public class Othello {
      * checkWinner checks whether the game has reached a win condition.
      * checkWinner only looks for horizontal wins.
      *
-     * @return 0 if nobody has won yet, 1 if player 1 has won, and 2 if player 2
-     *         has won, 3 if the game hits stalemate
+     * @return PlayerColor of the winner, empty if the game is a tie, or null if the game is not over
      **/
     public PlayerColor checkWinner() {
         if (blackValidMoves.isEmpty() && whiteValidMoves.isEmpty())
@@ -351,8 +400,8 @@ public class Othello {
      *
      * @param x column to retrieve
      * @param y row to retrieve
-     * @return an integer denoting the contents of the corresponding cell on the
-     *         game board. 0 = empty, 1 = Player 1, 2 = Player 2
+     * @return a player color value, empty if the space is a valid move, null if the space is empty and not a valid move
+     * This return paradigm allows for easy access to valid move spaces which can be displayed by the GUI
      **/
     public PlayerColor getBoardSpace(int x, int y) {
         PlayerColor space = board[x][y];
@@ -378,6 +427,7 @@ public class Othello {
         }
     }
 
+    //return points for black or white
     public int getBlackPoints()
     {
         return blackPoints;
@@ -388,13 +438,29 @@ public class Othello {
         return whitePoints;
     }
 
+    //returns the pass variable to see if the next turn will be passed
     public boolean getPass()
     {
         return pass;
     }
 
+    //TODO: test loading/saving won game
+    //TODO: test loading on pass turn
+    //TODO: test loading with no pieces
+    //saves the current game board by printing it into an output file
+    //first prints the current turn and then prints the board
     public void saveGameBoard() throws IOException {
         BufferedWriter bw = new BufferedWriter(new FileWriter(fileString));
+        if (currentTurn == PlayerColor.BLACK)
+        {
+            bw.write("BLACK");
+            bw.newLine();
+        }
+        else
+        {
+            bw.write("WHITE");
+            bw.newLine();
+        }
         for (int i = 0; i < board.length; i++)
         {
             for (int j = 0; j < board[0].length; j++)
@@ -419,17 +485,30 @@ public class Othello {
         bw.close();
     }
 
+    //returns the output file string
     public String getFileString()
     {
         return String.valueOf(fileString);
     }
 
+    //loads a file from a user specific location
+    //first reads the currnt turn then the board
+    //also resets points and recalculates valid moves
     public void loadFile(String file) throws IOException
     {
         BufferedReader br = new BufferedReader(new FileReader(file));
         int c;
         int x = 0;
         int y = 0;
+        String turn = br.readLine();
+        if (turn.equals("BLACK"))
+        {
+            currentTurn = PlayerColor.BLACK;
+        }
+        else
+        {
+            currentTurn = PlayerColor.WHITE;
+        }
         while ((c=br.read()) != -1)
         {
             char disk = (char) c;
@@ -454,6 +533,9 @@ public class Othello {
                 x = 0;
             }
         }
+        resetPoints();
+        blackValidMoves = generateValidMoves(PlayerColor.BLACK);
+        whiteValidMoves = generateValidMoves(PlayerColor.WHITE);
     }
 
     /**

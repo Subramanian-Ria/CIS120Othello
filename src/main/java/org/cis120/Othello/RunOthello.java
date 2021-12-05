@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
@@ -45,43 +46,42 @@ public class RunOthello implements Runnable {
 
         // Game board
         final GameBoard board = new GameBoard(status);
+        //sets background to green like classic othello boards
         Color boardColor = new Color(50, 130, 50);
         board.setBackground(boardColor);
         frame.add(board, BorderLayout.CENTER);
 
+        //a mouselistner to check for events in order to display JOptionPanes in the frame
         board.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
                 EventStatus event = board.getEvent();
                 if (event == EventStatus.ERROR) {
                     JOptionPane.showMessageDialog(frame, "Invalid Move", "Error", JOptionPane.ERROR_MESSAGE);
-                    board.setEvent(null);
+                    board.setEventNull();
                 }
                 else if (event == EventStatus.WIN_BLACK)
                 {
                     optionPane("BLACK Wins!", frame);
-                    board.setEvent(null);
-                }
+                    board.setEventNull();                }
                 else if (event == EventStatus.WIN_WHITE)
                 {
                     optionPane("WHITE Wins!", frame);
-                    board.setEvent(null);
-                }
+                    board.setEventNull();                }
                 else if (event == EventStatus.TIE)
                 {
                     optionPane("It's a Tie!", frame);
-                    board.setEvent(null);
-                }
+                    board.setEventNull();                }
                 else if (event == EventStatus.PASS_BLACK)
                 {
                     optionPane("BLACK must pass their turn", frame);
-                    board.setEvent(null);
+                    board.setEventNull();
                     board.passStatus();
                 }
                 else if (event == EventStatus.PASS_WHITE)
                 {
                     optionPane("WHITE must pass their turn", frame);
-                    board.setEvent(null);
+                    board.setEventNull();
                     board.passStatus();
                 }
             }
@@ -102,6 +102,7 @@ public class RunOthello implements Runnable {
             }
         });
 
+        //save button
         final JButton save = new JButton("Save");
         save.addActionListener(new ActionListener() {
             @Override
@@ -111,13 +112,21 @@ public class RunOthello implements Runnable {
                     board.saveGameBoard();
                     JOptionPane.showMessageDialog(frame, "Saved at " + board.getFileString());
                 }
+                catch (FileNotFoundException exception)
+                {
+                    JOptionPane.showMessageDialog(frame, "File Note Found", "Error", JOptionPane.ERROR_MESSAGE);
+                    //File Not Found exception will alert the user
+                }
                 catch (IOException exception)
                 {
-                    JOptionPane.showMessageDialog(frame, "Invalid Filepath", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(frame, "IO Exception", "Error", JOptionPane.ERROR_MESSAGE);
+                //IOException will give an error dialogue to the user
                 }
             }
         });
 
+        //load button
+        //allows user to specify filepath
         final JButton load = new JButton("Load");
         load.addActionListener(new ActionListener() {
             @Override
@@ -127,8 +136,14 @@ public class RunOthello implements Runnable {
                     String filepath = JOptionPane.showInputDialog(frame, "Enter filepath");
                     board.loadGameBoard(filepath);
                 }
+                catch (FileNotFoundException exception)
+                {
+                    JOptionPane.showMessageDialog(frame, "File Note Found", "Error", JOptionPane.ERROR_MESSAGE);
+                    //file not found exception will alert the user
+                }
                 catch (IOException exception)
                 {
+                    //IO exception will alert the user with an error dialogue
                     JOptionPane.showMessageDialog(frame, "IO Exception", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -146,6 +161,8 @@ public class RunOthello implements Runnable {
         // Start the game
         board.reset();
     }
+
+    //helper method so i don't have to write JOptionPane a lot
     private void optionPane(String msg, JFrame frame)
     {
         JOptionPane.showMessageDialog(frame, msg);

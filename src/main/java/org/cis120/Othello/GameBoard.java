@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * and acts as both the controller (with a MouseListener) and the view (with
  * its paintComponent method and the status JLabel).
  */
+//event status enum allows broadcasting of important events to RunOthello so that JOption panes can be displayed in the frame
 enum EventStatus
 {
     ERROR, WIN_BLACK, WIN_WHITE, TIE, PASS_BLACK, PASS_WHITE
@@ -40,7 +41,7 @@ public class GameBoard extends JPanel {
     private JLabel status; // current status text
 
 
-    private EventStatus event;
+    private EventStatus event; //non null if irregular event is occurring
 
     // Game constants
     public static final int BOARD_WIDTH = 600;
@@ -59,7 +60,7 @@ public class GameBoard extends JPanel {
 
         o = new Othello(); // initializes model for the game
         status = statusInit; // initializes the status JLabel
-        event = null;
+        event = null; //initializes event to null
 
         /*
          * Listens for mouseclicks. Updates the model, then updates the game
@@ -70,15 +71,14 @@ public class GameBoard extends JPanel {
             public void mouseReleased(MouseEvent e) {
                 Point p = e.getPoint();
 
-                try
+                try //if play turn fails an invalid move was played
                 {
                     // updates the model given the coordinates of the mouseclick
                     o.playTurn(p.x / 75, p.y / 75, o.getCurrentTurn());
-                    event = null;
                 }
                 catch (IllegalArgumentException exception)
                 {
-                    event = EventStatus.ERROR;
+                    event = EventStatus.ERROR; //move error event
                 }
 
                 updateStatus(); // updates the status JLabel
@@ -99,16 +99,20 @@ public class GameBoard extends JPanel {
         requestFocusInWindow();
     }
 
+    //calls save gameboard method in Othello.java
     public void saveGameBoard() throws IOException
     {
         o.saveGameBoard();
     }
 
+    //gets output file name to display to the user
     public String getFileString()
     {
         return o.getFileString();
     }
 
+    //loads a game board at a file location based on user input
+    //can be relative or absolute file path
     public void loadGameBoard(String filepath) throws IOException
     {
         o.loadFile(filepath);
@@ -116,14 +120,16 @@ public class GameBoard extends JPanel {
         repaint();
     }
 
+    //gets the current event
     public EventStatus getEvent()
     {
         return event;
     }
 
-    public void setEvent(EventStatus eventParam)
+    //sets the current event to null
+    public void setEventNull()
     {
-        event = eventParam;
+        event = null;
     }
 
     /**
@@ -131,6 +137,7 @@ public class GameBoard extends JPanel {
      */
     private void updateStatus() {
         if (o.getCurrentTurn() == PlayerColor.BLACK) {
+            //if next turn is pass then upon the previous move the pass event is declared
             if (o.getPass())
             {
                 status.setText("WHITE must pass | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
@@ -153,16 +160,17 @@ public class GameBoard extends JPanel {
         PlayerColor winner = o.checkWinner();
         if (winner == PlayerColor.BLACK) {
             status.setText("BLACK wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-            event = EventStatus.WIN_BLACK;
+            event = EventStatus.WIN_BLACK; //win event declared
         } else if (winner == PlayerColor.WHITE) {
             status.setText("WHITE wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-            event = EventStatus.WIN_WHITE;
+            event = EventStatus.WIN_WHITE; //win event declared
         } else if (winner == PlayerColor.EMPTY) {
             status.setText("It's a tie | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-            event = EventStatus.TIE;
+            event = EventStatus.TIE; //tie event declared
         }
     }
 
+    //called after a pass event to reset the status bar
     public void passStatus()
     {
         if (o.getCurrentTurn() == PlayerColor.BLACK)
@@ -201,6 +209,8 @@ public class GameBoard extends JPanel {
             g.drawLine(0, i, 600, i);
         }
 
+        //dots that are sometimes on online boards
+        //used simply as a reference point and serve no gameplay purpose
         for (int i = 145; i < 600; i += 300)
         {
             for (int j = 145; j < 600; j += 300)
@@ -209,7 +219,7 @@ public class GameBoard extends JPanel {
             }
         }
 
-        // Draws X's and O's
+        // Draws disks and potential moves
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 PlayerColor disk = o.getBoardSpace(j, i);
@@ -233,6 +243,7 @@ public class GameBoard extends JPanel {
                 }
                 else
                 {
+                    //potential moves are highlighted in player color
                     if (o.getCurrentTurn() == PlayerColor.BLACK)
                     {
                         g.setColor(Color.BLACK);
