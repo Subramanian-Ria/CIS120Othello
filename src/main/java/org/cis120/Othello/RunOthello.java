@@ -52,10 +52,37 @@ public class RunOthello implements Runnable {
         board.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (board.getError())
-                {
+                EventStatus event = board.getEvent();
+                if (event == EventStatus.ERROR) {
                     JOptionPane.showMessageDialog(frame, "Invalid Move", "Error", JOptionPane.ERROR_MESSAGE);
-                    board.setError(false);
+                    board.setEvent(null);
+                }
+                else if (event == EventStatus.WIN_BLACK)
+                {
+                    optionPane("BLACK Wins!", frame);
+                    board.setEvent(null);
+                }
+                else if (event == EventStatus.WIN_WHITE)
+                {
+                    optionPane("WHITE Wins!", frame);
+                    board.setEvent(null);
+                }
+                else if (event == EventStatus.TIE)
+                {
+                    optionPane("It's a Tie!", frame);
+                    board.setEvent(null);
+                }
+                else if (event == EventStatus.PASS_BLACK)
+                {
+                    optionPane("BLACK must pass their turn", frame);
+                    board.setEvent(null);
+                    board.passStatus();
+                }
+                else if (event == EventStatus.PASS_WHITE)
+                {
+                    optionPane("WHITE must pass their turn", frame);
+                    board.setEvent(null);
+                    board.passStatus();
                 }
             }
         });
@@ -118,5 +145,9 @@ public class RunOthello implements Runnable {
 
         // Start the game
         board.reset();
+    }
+    private void optionPane(String msg, JFrame frame)
+    {
+        JOptionPane.showMessageDialog(frame, msg);
     }
 }

@@ -30,6 +30,8 @@ public class Othello {
     //Tracks game over state
     private boolean gameOver;
 
+    private boolean pass;
+    //output filestring
     private final String fileString = "output/output.txt";
 
     //Othello constructor
@@ -48,6 +50,7 @@ public class Othello {
         blackValidMoves = new TreeSet<>();
         whiteValidMoves = new TreeSet<>();
         gameOver = false;
+        pass = false;
         initBoard();
         blackValidMoves = generateValidMoves(PlayerColor.BLACK);
         whiteValidMoves = generateValidMoves(PlayerColor.WHITE);
@@ -202,7 +205,6 @@ public class Othello {
             gameOver = true;
             return false;
         }
-        //TODO: pass pop up
         if (moves.isEmpty())
         {
             currentTurnFlip();
@@ -230,26 +232,24 @@ public class Othello {
             blackValidMoves = generateValidMoves(PlayerColor.BLACK);
             whiteValidMoves = generateValidMoves(PlayerColor.WHITE);
             currentTurnFlip();
+            if (player == PlayerColor.BLACK && whiteValidMoves.isEmpty())
+            {
+                pass = true;
+                currentTurnFlip();
+            }
+            else if (player == PlayerColor.WHITE && blackValidMoves.isEmpty())
+            {
+                pass = true;
+                currentTurnFlip();
+            }
+            else
+            {
+                pass = false;
+            }
             return true;
         }
         throw new IllegalArgumentException();
     }
-
-    /*
-    private void updateValidMoves(TreeSet<ValidMove> moves, LinkedList<int[]> flipped, PlayerColor player)
-    {
-        moves.removeIf(move -> board[move.getX()][move.getY()] != null);
-        for (ValidMove move : moves)
-        {
-            for (int[] disk : flipped)
-            {
-                if (move.contains(disk) && checkMove(move.getX(), move.getY(), player).isEmpty())
-                {
-                    moves.remove(move);
-                }
-            }
-        }
-    }*/
 
     /**
      * checkWinner checks whether the game has reached a win condition.
@@ -388,6 +388,11 @@ public class Othello {
         return whitePoints;
     }
 
+    public boolean getPass()
+    {
+        return pass;
+    }
+
     public void saveGameBoard() throws IOException {
         BufferedWriter bw = new BufferedWriter(new FileWriter(fileString));
         for (int i = 0; i < board.length; i++)
@@ -464,27 +469,9 @@ public class Othello {
     public static void main(String[] args) throws IOException {
         Othello o = new Othello();
         o.printGameState();
-        o.loadFile("output/output.txt");
-        o.printGameState();
-        /*o.printGameState();
         o.playTurn(5,4, PlayerColor.BLACK);
         o.printGameState();
-        o.playTurn(3, 5, PlayerColor.WHITE);
+        o.playTurn(1, 1, PlayerColor.WHITE);
         o.printGameState();
-        o.playTurn(2, 4, PlayerColor.BLACK);
-        o.printGameState();
-        o.playTurn(5, 3, PlayerColor.WHITE);
-        o.printGameState();
-        o.playTurn(4, 2, PlayerColor.BLACK);
-        o.printGameState();
-        o.playTurn(5, 5, PlayerColor.WHITE);
-        o.printGameState();
-        o.playTurn(6, 4, PlayerColor.BLACK);
-        o.printGameState();
-        o.playTurn(4, 5, PlayerColor.WHITE);
-        o.printGameState();
-        o.playTurn(4, 6, PlayerColor.BLACK);
-        o.printGameState();
-        o.playTurn(1, 2, PlayerColor.WHITE);*/
     }
 }

@@ -29,12 +29,18 @@ import java.util.concurrent.TimeUnit;
  * and acts as both the controller (with a MouseListener) and the view (with
  * its paintComponent method and the status JLabel).
  */
+enum EventStatus
+{
+    ERROR, WIN_BLACK, WIN_WHITE, TIE, PASS_BLACK, PASS_WHITE
+}
 @SuppressWarnings("serial")
 public class GameBoard extends JPanel {
 
     private Othello o; // model for the game
     private JLabel status; // current status text
-    private boolean error;
+
+
+    private EventStatus event;
 
     // Game constants
     public static final int BOARD_WIDTH = 600;
@@ -53,7 +59,7 @@ public class GameBoard extends JPanel {
 
         o = new Othello(); // initializes model for the game
         status = statusInit; // initializes the status JLabel
-        error = false;
+        event = null;
 
         /*
          * Listens for mouseclicks. Updates the model, then updates the game
@@ -68,10 +74,11 @@ public class GameBoard extends JPanel {
                 {
                     // updates the model given the coordinates of the mouseclick
                     o.playTurn(p.x / 75, p.y / 75, o.getCurrentTurn());
+                    event = null;
                 }
                 catch (IllegalArgumentException exception)
                 {
-                    error = true;
+                    event = EventStatus.ERROR;
                 }
 
                 updateStatus(); // updates the status JLabel
@@ -85,7 +92,7 @@ public class GameBoard extends JPanel {
      */
     public void reset() {
         o.reset();
-        status.setText("Black's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+        status.setText("BLACK's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
         repaint();
 
         // Makes sure this component has keyboard/mouse focus
@@ -109,14 +116,14 @@ public class GameBoard extends JPanel {
         repaint();
     }
 
-    public boolean getError()
+    public EventStatus getEvent()
     {
-        return error;
+        return event;
     }
 
-    public void setError(boolean errorParam)
+    public void setEvent(EventStatus eventParam)
     {
-        error = errorParam;
+        event = eventParam;
     }
 
     /**
@@ -124,19 +131,47 @@ public class GameBoard extends JPanel {
      */
     private void updateStatus() {
         if (o.getCurrentTurn() == PlayerColor.BLACK) {
-            status.setText("BLACK's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+            if (o.getPass())
+            {
+                status.setText("WHITE must pass | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+                event = EventStatus.PASS_WHITE;
+            }
+            else {
+                status.setText("BLACK's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+            }
         } else {
-            status.setText("WHITE's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+            if (o.getPass())
+            {
+                status.setText("BLACK must pass | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+                event = EventStatus.PASS_BLACK;
+            }
+            else {
+                status.setText("WHITE's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+            }
         }
 
-        //TODO: make popup
         PlayerColor winner = o.checkWinner();
         if (winner == PlayerColor.BLACK) {
             status.setText("BLACK wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+            event = EventStatus.WIN_BLACK;
         } else if (winner == PlayerColor.WHITE) {
             status.setText("WHITE wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+            event = EventStatus.WIN_WHITE;
         } else if (winner == PlayerColor.EMPTY) {
-            status.setText("It's a tie.");
+            status.setText("It's a tie | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+            event = EventStatus.TIE;
+        }
+    }
+
+    public void passStatus()
+    {
+        if (o.getCurrentTurn() == PlayerColor.BLACK)
+        {
+            status.setText("BLACK's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+        }
+        else
+        {
+            status.setText("WHITE's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
         }
     }
 

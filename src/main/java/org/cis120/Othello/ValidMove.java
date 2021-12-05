@@ -8,7 +8,7 @@ import java.util.Objects;
 public class ValidMove implements Comparable<ValidMove>{
     private final int x;
     private final int y;
-    private LinkedHashSet<int[]> flippedDisks;
+    private final LinkedHashSet<int[]> flippedDisks;
     public ValidMove(int xParam, int yParam, LinkedHashSet<int[]> flippedParam)
     {
         x = xParam;
