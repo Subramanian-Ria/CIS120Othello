@@ -1,13 +1,15 @@
 package org.cis120.Othello;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.Objects;
 
 public class ValidMove implements Comparable<ValidMove>{
     private final int x;
     private final int y;
-    //TODO: linked hash set?
-    private LinkedList<int[]> flippedDisks;
-    public ValidMove(int xParam, int yParam, LinkedList<int[]> flippedParam)
+    private LinkedHashSet<int[]> flippedDisks;
+    public ValidMove(int xParam, int yParam, LinkedHashSet<int[]> flippedParam)
     {
         x = xParam;
         y = yParam;
@@ -68,6 +70,12 @@ public class ValidMove implements Comparable<ValidMove>{
         }
         ValidMove v = (ValidMove) obj;
         return this.x == v.getX() && this.y == v.getY();
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(x, y, flippedDisks);
     }
 
 }

@@ -1,5 +1,7 @@
 package org.cis120.Othello;
 
+import java.io.*;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.TreeSet;
 
@@ -25,6 +27,11 @@ public class Othello {
     private TreeSet<ValidMove> blackValidMoves;
     private TreeSet<ValidMove> whiteValidMoves;
 
+    //Tracks game over state
+    private boolean gameOver;
+
+    private final String fileString = "output/output.txt";
+
     //Othello constructor
     public Othello() {
         reset();
@@ -40,6 +47,7 @@ public class Othello {
         whitePoints = 2;
         blackValidMoves = new TreeSet<>();
         whiteValidMoves = new TreeSet<>();
+        gameOver = false;
         initBoard();
         blackValidMoves = generateValidMoves(PlayerColor.BLACK);
         whiteValidMoves = generateValidMoves(PlayerColor.WHITE);
@@ -55,10 +63,10 @@ public class Othello {
                 board[i][j] = PlayerColor.EMPTY;
             }
         }
-        board[3][3] = PlayerColor.BLACK;
-        board[3][4] = PlayerColor.WHITE;
-        board[4][3] = PlayerColor.WHITE;
-        board[4][4] = PlayerColor.BLACK;
+        board[3][3] = PlayerColor.WHITE;
+        board[3][4] = PlayerColor.BLACK;
+        board[4][3] = PlayerColor.BLACK;
+        board[4][4] = PlayerColor.WHITE;
     }
 
     private void currentTurnFlip()
@@ -88,11 +96,12 @@ public class Othello {
                     {
                         for (int l = -1; l < 2; l++)
                         {
-                            if (k == 0 && l == 0 || board[i + k][j + l] != PlayerColor.EMPTY)
+                            if (k == 0 && l == 0 || i + k > 7 || j + l > 7 || i + k < 0 ||
+                                    j + l < 0 || board[i + k][j + l] != PlayerColor.EMPTY)
                             {
                                 continue;
                             }
-                            LinkedList<int[]> flipped = checkMove(i + k, j + l, player);
+                            LinkedHashSet<int[]> flipped = checkMove(i + k, j + l, player);
                             if (!flipped.isEmpty())
                             {
                                 ValidMove v = new ValidMove(i + k, j + l, flipped);
@@ -120,9 +129,9 @@ public class Othello {
     }
 
     //checks if a move is valid using raycast helper
-    private LinkedList<int[]> checkMove(int x, int y, PlayerColor player)
+    private LinkedHashSet<int[]> checkMove(int x, int y, PlayerColor player)
     {
-        LinkedList<int[]> flipped = new LinkedList<>();
+        LinkedHashSet<int[]> flipped = new LinkedHashSet<>();
         if (board[x][y] == PlayerColor.EMPTY)
         {
             for (int i = -1; i < 2; i++)
@@ -134,7 +143,7 @@ public class Othello {
                         continue;
                     }
                     flipped.addAll(rayCast(x + i, y + j, new int[]{i, j}, player,
-                            new LinkedList<>()));
+                            new LinkedHashSet<>()));
                 }
             }
         }
@@ -143,12 +152,12 @@ public class Othello {
 
     //Helper function to cast a ray over the board to figure out if a certain direction is valid
     //i.e. will result in a valid "flanking maneuver"
-    private LinkedList<int[]> rayCast(int x, int y, int[] ray, PlayerColor player,
-                                      LinkedList<int[]> rayQueue)
+    private LinkedHashSet<int[]> rayCast(int x, int y, int[] ray, PlayerColor player,
+                                      LinkedHashSet<int[]> rayQueue)
     {
         if (x > 7 || y > 7 || x < 0 || y < 0 || board[x][y] == PlayerColor.EMPTY)
         {
-            return new LinkedList<>();
+            return new LinkedHashSet<>();
         }
         else if (board[x][y] != player)
         {
@@ -174,6 +183,7 @@ public class Othello {
      * @return whether the turn was successful
      **/
     public boolean playTurn(int x, int y, PlayerColor player) {
+        System.out.println(x + ", " + y);
         TreeSet<ValidMove> moves;
         if (player!=currentTurn)
         {
@@ -187,11 +197,12 @@ public class Othello {
         {
             moves = whiteValidMoves;
         }
-        if (checkWinner() != null)
+        if (checkWinner() != null || gameOver)
         {
-            System.out.println("WINNER");
+            gameOver = true;
             return false;
         }
+        //TODO: pass pop up
         if (moves.isEmpty())
         {
             currentTurnFlip();
@@ -221,7 +232,7 @@ public class Othello {
             currentTurnFlip();
             return true;
         }
-        return false;
+        throw new IllegalArgumentException();
     }
 
     /*
@@ -344,7 +355,27 @@ public class Othello {
      *         game board. 0 = empty, 1 = Player 1, 2 = Player 2
      **/
     public PlayerColor getBoardSpace(int x, int y) {
-        return board[x][y];
+        PlayerColor space = board[x][y];
+        if (space != PlayerColor.EMPTY)
+        {
+            return space;
+        }
+        else if (currentTurn == PlayerColor.BLACK)
+        {
+            if (getValidMove(blackValidMoves, x, y) != null)
+            {
+                return PlayerColor.EMPTY;
+            }
+            return null;
+        }
+        else
+        {
+            if (getValidMove(whiteValidMoves, x, y) != null)
+            {
+                return PlayerColor.EMPTY;
+            }
+            return null;
+        }
     }
 
     public int getBlackPoints()
@@ -357,6 +388,69 @@ public class Othello {
         return whitePoints;
     }
 
+    public void saveGameBoard() throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(fileString));
+        for (int i = 0; i < board.length; i++)
+        {
+            for (int j = 0; j < board[0].length; j++)
+            {
+                PlayerColor space = board[j][i];
+                if (space == PlayerColor.BLACK)
+                {
+                    bw.write("X");
+                }
+                else if (space == PlayerColor.WHITE)
+                {
+                    bw.write("O");
+                }
+                else
+                {
+                    bw.write("*");
+                }
+            }
+            bw.newLine();
+        }
+        bw.flush();
+        bw.close();
+    }
+
+    public String getFileString()
+    {
+        return String.valueOf(fileString);
+    }
+
+    public void loadFile(String file) throws IOException
+    {
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        int c;
+        int x = 0;
+        int y = 0;
+        while ((c=br.read()) != -1)
+        {
+            char disk = (char) c;
+            if (disk == 'X')
+            {
+                board[x][y] = PlayerColor.BLACK;
+                x++;
+            }
+            else if (disk == 'O')
+            {
+                board[x][y] = PlayerColor.WHITE;
+                x++;
+            }
+            else if (disk == '*')
+            {
+                board[x][y] = PlayerColor.EMPTY;
+                x++;
+            }
+            else if (x == 8)
+            {
+                y++;
+                x = 0;
+            }
+        }
+    }
+
     /**
      * This main method illustrates how the model is completely independent of
      * the view and controller. We can play the game from start to finish
@@ -367,14 +461,30 @@ public class Othello {
      *
      * Run this file to see the output of this method in your console.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Othello o = new Othello();
         o.printGameState();
-        o.playTurn(2,4, PlayerColor.BLACK);
+        o.loadFile("output/output.txt");
+        o.printGameState();
+        /*o.printGameState();
+        o.playTurn(5,4, PlayerColor.BLACK);
+        o.printGameState();
+        o.playTurn(3, 5, PlayerColor.WHITE);
+        o.printGameState();
+        o.playTurn(2, 4, PlayerColor.BLACK);
+        o.printGameState();
+        o.playTurn(5, 3, PlayerColor.WHITE);
+        o.printGameState();
+        o.playTurn(4, 2, PlayerColor.BLACK);
+        o.printGameState();
+        o.playTurn(5, 5, PlayerColor.WHITE);
+        o.printGameState();
+        o.playTurn(6, 4, PlayerColor.BLACK);
         o.printGameState();
         o.playTurn(4, 5, PlayerColor.WHITE);
         o.printGameState();
-        o.playTurn(5, 4, PlayerColor.BLACK);
+        o.playTurn(4, 6, PlayerColor.BLACK);
         o.printGameState();
+        o.playTurn(1, 2, PlayerColor.WHITE);*/
     }
 }

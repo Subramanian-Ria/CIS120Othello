@@ -10,6 +10,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class instantiates a TicTacToe object, which is the model for the game.
@@ -30,12 +32,13 @@ import java.awt.event.MouseEvent;
 @SuppressWarnings("serial")
 public class GameBoard extends JPanel {
 
-    private Othello ttt; // model for the game
+    private Othello o; // model for the game
     private JLabel status; // current status text
+    private boolean error;
 
     // Game constants
-    public static final int BOARD_WIDTH = 300;
-    public static final int BOARD_HEIGHT = 300;
+    public static final int BOARD_WIDTH = 600;
+    public static final int BOARD_HEIGHT = 600;
 
     /**
      * Initializes the game board.
@@ -48,8 +51,9 @@ public class GameBoard extends JPanel {
         // keyboard focus, key events are handled by its key listener.
         setFocusable(true);
 
-        ttt = new Othello(); // initializes model for the game
+        o = new Othello(); // initializes model for the game
         status = statusInit; // initializes the status JLabel
+        error = false;
 
         /*
          * Listens for mouseclicks. Updates the model, then updates the game
@@ -60,8 +64,15 @@ public class GameBoard extends JPanel {
             public void mouseReleased(MouseEvent e) {
                 Point p = e.getPoint();
 
-                // updates the model given the coordinates of the mouseclick
-                //ttt.playTurn(p.x / 100, p.y / 100);
+                try
+                {
+                    // updates the model given the coordinates of the mouseclick
+                    o.playTurn(p.x / 75, p.y / 75, o.getCurrentTurn());
+                }
+                catch (IllegalArgumentException exception)
+                {
+                    error = true;
+                }
 
                 updateStatus(); // updates the status JLabel
                 repaint(); // repaints the game board
@@ -73,31 +84,58 @@ public class GameBoard extends JPanel {
      * (Re-)sets the game to its initial state.
      */
     public void reset() {
-        //ttt.reset();
-        status.setText("Player 1's Turn");
+        o.reset();
+        status.setText("Black's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
         repaint();
 
         // Makes sure this component has keyboard/mouse focus
         requestFocusInWindow();
     }
 
+    public void saveGameBoard() throws IOException
+    {
+        o.saveGameBoard();
+    }
+
+    public String getFileString()
+    {
+        return o.getFileString();
+    }
+
+    public void loadGameBoard(String filepath) throws IOException
+    {
+        o.loadFile(filepath);
+        updateStatus();
+        repaint();
+    }
+
+    public boolean getError()
+    {
+        return error;
+    }
+
+    public void setError(boolean errorParam)
+    {
+        error = errorParam;
+    }
+
     /**
      * Updates the JLabel to reflect the current state of the game.
      */
     private void updateStatus() {
-        /*if (ttt.getCurrentPlayer()) {
-            status.setText("Player 1's Turn");
+        if (o.getCurrentTurn() == PlayerColor.BLACK) {
+            status.setText("BLACK's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
         } else {
-            status.setText("Player 2's Turn");
-        }*/
+            status.setText("WHITE's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+        }
 
-        //int winner = ttt.checkWinner();
-        int winner =1;
-        if (winner == 1) {
-            status.setText("Player 1 wins!!!");
-        } else if (winner == 2) {
-            status.setText("Player 2 wins!!!");
-        } else if (winner == 3) {
+        //TODO: make popup
+        PlayerColor winner = o.checkWinner();
+        if (winner == PlayerColor.BLACK) {
+            status.setText("BLACK wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+        } else if (winner == PlayerColor.WHITE) {
+            status.setText("WHITE wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
+        } else if (winner == PlayerColor.EMPTY) {
             status.setText("It's a tie.");
         }
     }
@@ -115,23 +153,60 @@ public class GameBoard extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        g.setColor(Color.BLACK);
 
         // Draws board grid
-        g.drawLine(100, 0, 100, 300);
-        g.drawLine(200, 0, 200, 300);
-        g.drawLine(0, 100, 300, 100);
-        g.drawLine(0, 200, 300, 200);
+        for (int i = 75; i < 600; i += 75)
+        {
+            g.drawLine(i , 0, i, 600);
+        }
+
+        for (int i = 75; i < 600; i += 75)
+        {
+            g.drawLine(0, i, 600, i);
+        }
+
+        for (int i = 145; i < 600; i += 300)
+        {
+            for (int j = 145; j < 600; j += 300)
+            {
+                g.fillOval(i, j, 10, 10);
+            }
+        }
 
         // Draws X's and O's
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                //int state = ttt.getCell(j, i);
-                int state = 1;
-                if (state == 1) {
-                    g.drawOval(30 + 100 * j, 30 + 100 * i, 40, 40);
-                } else if (state == 2) {
-                    g.drawLine(30 + 100 * j, 30 + 100 * i, 70 + 100 * j, 70 + 100 * i);
-                    g.drawLine(30 + 100 * j, 70 + 100 * i, 70 + 100 * j, 30 + 100 * i);
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                PlayerColor disk = o.getBoardSpace(j, i);
+                if (disk == null)
+                {
+                    continue;
+                }
+                g.setColor(Color.black);
+                if (disk == PlayerColor.BLACK)
+                {
+                    g.setColor(Color.BLACK);
+                }
+                else if (disk == PlayerColor.WHITE)
+                {
+                    g.setColor(Color.WHITE);
+
+                }
+                if (disk != PlayerColor.EMPTY)
+                {
+                    g.fillOval(75 * j + 5, 75 * i + 5, 65, 65);
+                }
+                else
+                {
+                    if (o.getCurrentTurn() == PlayerColor.BLACK)
+                    {
+                        g.setColor(Color.BLACK);
+                    }
+                    else
+                    {
+                        g.setColor(Color.WHITE);
+                    }
+                    g.drawOval(75 * j + 5, 75 * i + 5, 65, 65);
                 }
             }
         }

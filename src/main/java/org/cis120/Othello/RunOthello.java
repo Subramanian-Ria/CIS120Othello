@@ -10,6 +10,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
 
 /**
  * This class sets up the top-level frame and widgets for the GUI.
@@ -31,8 +34,8 @@ public class RunOthello implements Runnable {
         // NOTE: the 'final' keyword denotes immutability even for local variables.
 
         // Top-level frame in which game components live
-        final JFrame frame = new JFrame("TicTacToe");
-        frame.setLocation(300, 300);
+        final JFrame frame = new JFrame("Othello");
+        frame.setLocation(330, 15);
 
         // Status panel
         final JPanel status_panel = new JPanel();
@@ -42,7 +45,20 @@ public class RunOthello implements Runnable {
 
         // Game board
         final GameBoard board = new GameBoard(status);
+        Color boardColor = new Color(50, 130, 50);
+        board.setBackground(boardColor);
         frame.add(board, BorderLayout.CENTER);
+
+        board.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (board.getError())
+                {
+                    JOptionPane.showMessageDialog(frame, "Invalid Move", "Error", JOptionPane.ERROR_MESSAGE);
+                    board.setError(false);
+                }
+            }
+        });
 
         // Reset button
         final JPanel control_panel = new JPanel();
@@ -58,7 +74,42 @@ public class RunOthello implements Runnable {
                 board.reset();
             }
         });
+
+        final JButton save = new JButton("Save");
+        save.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try
+                {
+                    board.saveGameBoard();
+                    JOptionPane.showMessageDialog(frame, "Saved at " + board.getFileString());
+                }
+                catch (IOException exception)
+                {
+                    JOptionPane.showMessageDialog(frame, "Invalid Filepath", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        final JButton load = new JButton("Load");
+        load.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try
+                {
+                    String filepath = JOptionPane.showInputDialog(frame, "Enter filepath");
+                    board.loadGameBoard(filepath);
+                }
+                catch (IOException exception)
+                {
+                    JOptionPane.showMessageDialog(frame, "IO Exception", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
         control_panel.add(reset);
+        control_panel.add(save);
+        control_panel.add(load);
 
         // Put the frame on the screen
         frame.pack();
