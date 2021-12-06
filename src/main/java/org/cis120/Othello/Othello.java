@@ -255,7 +255,7 @@ public class Othello {
             board[x][y] = player;
 
             //flip all disks changed by the move
-            LinkedList<int[]> flipped = move.getFlippedDisks();
+            LinkedHashSet<int[]> flipped = move.getFlippedDisks();
             for (int[] disk : flipped)
             {
                 board[disk[0]][disk[1]] = player;
