@@ -29,11 +29,7 @@ import java.util.concurrent.TimeUnit;
  * and acts as both the controller (with a MouseListener) and the view (with
  * its paintComponent method and the status JLabel).
  */
-//event status enum allows broadcasting of important events to RunOthello so that JOption panes can be displayed in the frame
-enum EventStatus
-{
-    ERROR, WIN_BLACK, WIN_WHITE, TIE, PASS_BLACK, PASS_WHITE
-}
+
 @SuppressWarnings("serial")
 public class GameBoard extends JPanel {
 
@@ -41,7 +37,7 @@ public class GameBoard extends JPanel {
     private JLabel status; // current status text
 
 
-    private EventStatus event; //non null if irregular event is occurring
+    private EventStatusEnum event; //non null if irregular event is occurring
 
     // Game constants
     public static final int BOARD_WIDTH = 600;
@@ -78,7 +74,7 @@ public class GameBoard extends JPanel {
                 }
                 catch (IllegalArgumentException exception)
                 {
-                    event = EventStatus.ERROR; //move error event
+                    event = EventStatusEnum.ERROR; //move error event
                 }
 
                 updateStatus(); // updates the status JLabel
@@ -121,7 +117,7 @@ public class GameBoard extends JPanel {
     }
 
     //gets the current event
-    public EventStatus getEvent()
+    public EventStatusEnum getEvent()
     {
         return event;
     }
@@ -141,7 +137,7 @@ public class GameBoard extends JPanel {
             if (o.getPass())
             {
                 status.setText("WHITE must pass | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-                event = EventStatus.PASS_WHITE;
+                event = EventStatusEnum.PASS_WHITE;
             }
             else {
                 status.setText("BLACK's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
@@ -150,7 +146,7 @@ public class GameBoard extends JPanel {
             if (o.getPass())
             {
                 status.setText("BLACK must pass | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-                event = EventStatus.PASS_BLACK;
+                event = EventStatusEnum.PASS_BLACK;
             }
             else {
                 status.setText("WHITE's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
@@ -160,13 +156,13 @@ public class GameBoard extends JPanel {
         PlayerColor winner = o.checkWinner();
         if (winner == PlayerColor.BLACK) {
             status.setText("BLACK wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-            event = EventStatus.WIN_BLACK; //win event declared
+            event = EventStatusEnum.WIN_BLACK; //win event declared
         } else if (winner == PlayerColor.WHITE) {
             status.setText("WHITE wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-            event = EventStatus.WIN_WHITE; //win event declared
+            event = EventStatusEnum.WIN_WHITE; //win event declared
         } else if (winner == PlayerColor.EMPTY) {
             status.setText("It's a tie | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-            event = EventStatus.TIE; //tie event declared
+            event = EventStatusEnum.TIE; //tie event declared
         }
     }
 

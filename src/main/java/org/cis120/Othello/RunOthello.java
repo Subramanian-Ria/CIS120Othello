@@ -14,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Observer;
 
 /**
  * This class sets up the top-level frame and widgets for the GUI.
@@ -55,30 +56,30 @@ public class RunOthello implements Runnable {
         board.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                EventStatus event = board.getEvent();
-                if (event == EventStatus.ERROR) {
+                EventStatusEnum event = board.getEvent();
+                if (event == EventStatusEnum.ERROR) {
                     JOptionPane.showMessageDialog(frame, "Invalid Move", "Error", JOptionPane.ERROR_MESSAGE);
                     board.setEventNull();
                 }
-                else if (event == EventStatus.WIN_BLACK)
+                else if (event == EventStatusEnum.WIN_BLACK)
                 {
                     optionPane("BLACK Wins!", frame);
                     board.setEventNull();                }
-                else if (event == EventStatus.WIN_WHITE)
+                else if (event == EventStatusEnum.WIN_WHITE)
                 {
                     optionPane("WHITE Wins!", frame);
                     board.setEventNull();                }
-                else if (event == EventStatus.TIE)
+                else if (event == EventStatusEnum.TIE)
                 {
                     optionPane("It's a Tie!", frame);
                     board.setEventNull();                }
-                else if (event == EventStatus.PASS_BLACK)
+                else if (event == EventStatusEnum.PASS_BLACK)
                 {
                     optionPane("BLACK must pass their turn", frame);
                     board.setEventNull();
                     board.passStatus();
                 }
-                else if (event == EventStatus.PASS_WHITE)
+                else if (event == EventStatusEnum.PASS_WHITE)
                 {
                     optionPane("WHITE must pass their turn", frame);
                     board.setEventNull();
