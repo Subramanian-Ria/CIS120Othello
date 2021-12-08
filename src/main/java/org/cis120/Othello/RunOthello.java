@@ -10,8 +10,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Observer;
@@ -45,48 +45,14 @@ public class RunOthello implements Runnable {
         final JLabel status = new JLabel("Setting up...");
         status_panel.add(status);
 
+        EventStatus eventStatus = new EventStatus();
+
         // Game board
-        final GameBoard board = new GameBoard(status);
+        final GameBoard board = new GameBoard(status, eventStatus);
         //sets background to green like classic othello boards
         Color boardColor = new Color(50, 130, 50);
         board.setBackground(boardColor);
         frame.add(board, BorderLayout.CENTER);
-
-        //a mouselistner to check for events in order to display JOptionPanes in the frame
-        board.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                EventStatusEnum event = board.getEvent();
-                if (event == EventStatusEnum.ERROR) {
-                    JOptionPane.showMessageDialog(frame, "Invalid Move", "Error", JOptionPane.ERROR_MESSAGE);
-                    board.setEventNull();
-                }
-                else if (event == EventStatusEnum.WIN_BLACK)
-                {
-                    optionPane("BLACK Wins!", frame);
-                    board.setEventNull();                }
-                else if (event == EventStatusEnum.WIN_WHITE)
-                {
-                    optionPane("WHITE Wins!", frame);
-                    board.setEventNull();                }
-                else if (event == EventStatusEnum.TIE)
-                {
-                    optionPane("It's a Tie!", frame);
-                    board.setEventNull();                }
-                else if (event == EventStatusEnum.PASS_BLACK)
-                {
-                    optionPane("BLACK must pass their turn", frame);
-                    board.setEventNull();
-                    board.passStatus();
-                }
-                else if (event == EventStatusEnum.PASS_WHITE)
-                {
-                    optionPane("WHITE must pass their turn", frame);
-                    board.setEventNull();
-                    board.passStatus();
-                }
-            }
-        });
 
         // Reset button
         final JPanel control_panel = new JPanel();
@@ -139,7 +105,7 @@ public class RunOthello implements Runnable {
                 }
                 catch (FileNotFoundException exception)
                 {
-                    JOptionPane.showMessageDialog(frame, "File Note Found", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(frame, "File Not Found", "Error", JOptionPane.ERROR_MESSAGE);
                     //file not found exception will alert the user
                 }
                 catch (IOException exception)
@@ -154,6 +120,60 @@ public class RunOthello implements Runnable {
         control_panel.add(save);
         control_panel.add(load);
 
+        class EventStatusListener implements PropertyChangeListener {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent event)
+            {
+                if (event.getPropertyName().equals("EventStatus"))
+                {
+                    System.out.println("HI");
+                    EventStatus eventSource = (EventStatus) event.getSource();
+                    EventStatusEnum eventValue = (EventStatusEnum) event.getNewValue();
+                    if (eventValue == EventStatusEnum.ERROR)
+                    {
+                        JOptionPane.showMessageDialog(frame, "Invalid Move", "Error", JOptionPane.ERROR_MESSAGE);
+                        eventSource.setEventNull();
+                    }
+                    else if (eventValue == EventStatusEnum.WIN_BLACK)
+                    {
+                        optionPane("BLACK Wins!", frame);
+                        eventSource.setEventNull();
+                    }
+                    else if (eventValue == EventStatusEnum.WIN_WHITE)
+                    {
+                        optionPane("WHITE Wins!", frame);
+                        eventSource.setEventNull();
+                    }
+                    else if (eventValue == EventStatusEnum.TIE)
+                    {
+                        optionPane("It's a Tie!", frame);
+                        eventSource.setEventNull();
+                    }
+                    else if (eventValue == EventStatusEnum.PASS_BLACK)
+                    {
+                        optionPane("BLACK must pass their turn", frame);
+                        eventSource.setEventNull();
+                        board.passStatus();
+                    }
+                    else if (eventValue == EventStatusEnum.PASS_WHITE) {
+                        optionPane("WHITE must pass their turn", frame);
+                        eventSource.setEventNull();
+                        board.passStatus();
+                    }
+                }
+            }
+
+            //helper method so i don't have to write JOptionPane a lot
+            private void optionPane(String msg, JFrame frame)
+            {
+                JOptionPane.showMessageDialog(frame, msg);
+            }
+        }
+
+        EventStatusListener listener = new EventStatusListener();
+        eventStatus.addPropertyChangeListener(listener);
+
         // Put the frame on the screen
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -161,11 +181,5 @@ public class RunOthello implements Runnable {
 
         // Start the game
         board.reset();
-    }
-
-    //helper method so i don't have to write JOptionPane a lot
-    private void optionPane(String msg, JFrame frame)
-    {
-        JOptionPane.showMessageDialog(frame, msg);
     }
 }

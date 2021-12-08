@@ -1,43 +1,38 @@
 package org.cis120.Othello;
 
-import sun.jvm.hotspot.utilities.Observable;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 
 //event status enum allows broadcasting of important events to RunOthello so that JOption panes can be displayed in the frame
 enum EventStatusEnum
 {
     ERROR, WIN_BLACK, WIN_WHITE, TIE, PASS_BLACK, PASS_WHITE
 }
-public class EventStatus extends Observable {
+public class EventStatus {
+
+    protected PropertyChangeSupport propertyChangeSupport;
     private EventStatusEnum event;
+
     public EventStatus ()
     {
+        propertyChangeSupport = new PropertyChangeSupport(this);
         event = null;
     }
 
-    public EventStatusEnum getEvent()
+    public void setEvent(EventStatusEnum eventParam)
     {
-        return event;
-    }
-
-    public void setEvent(EventStatusEnum param)
-    {
-        event = param;
-        notifyObservers(param);
+        EventStatusEnum oldEvent = this.event;
+        this.event = eventParam;
+        propertyChangeSupport.firePropertyChange("EventStatus", oldEvent, this.event);
     }
 
     public void setEventNull()
     {
-        event = null;
-        notifyObservers(null);
+        setEvent(null);
     }
 
-    public void addObserver()
+    public void addPropertyChangeListener(PropertyChangeListener listener)
     {
-
-    }
-
-    public void notifyObservers(EventStatusEnum param)
-    {
-
+        propertyChangeSupport.addPropertyChangeListener(listener);
     }
 }

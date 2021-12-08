@@ -11,7 +11,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This class instantiates a TicTacToe object, which is the model for the game.
@@ -35,9 +34,8 @@ public class GameBoard extends JPanel {
 
     private Othello o; // model for the game
     private JLabel status; // current status text
-
-
-    private EventStatusEnum event; //non null if irregular event is occurring
+    EventStatus eventStatus;
+    EventStatusEnum tempEventStatus;
 
     // Game constants
     public static final int BOARD_WIDTH = 600;
@@ -46,7 +44,7 @@ public class GameBoard extends JPanel {
     /**
      * Initializes the game board.
      */
-    public GameBoard(JLabel statusInit) {
+    public GameBoard(JLabel statusInit, EventStatus eventStatusParam) {
         // creates border around the court area, JComponent method
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
@@ -56,7 +54,7 @@ public class GameBoard extends JPanel {
 
         o = new Othello(); // initializes model for the game
         status = statusInit; // initializes the status JLabel
-        event = null; //initializes event to null
+        eventStatus = eventStatusParam;
 
         /*
          * Listens for mouseclicks. Updates the model, then updates the game
@@ -71,14 +69,15 @@ public class GameBoard extends JPanel {
                 {
                     // updates the model given the coordinates of the mouseclick
                     o.playTurn(p.x / 75, p.y / 75, o.getCurrentTurn());
+                    updateStatus(); // updates the status JLabel
+                    repaint(); // repaints the game board
                 }
                 catch (IllegalArgumentException exception)
                 {
-                    event = EventStatusEnum.ERROR; //move error event
+                    tempEventStatus = EventStatusEnum.ERROR;//move error event
                 }
-
-                updateStatus(); // updates the status JLabel
-                repaint(); // repaints the game board
+                eventStatus.setEvent(tempEventStatus);
+                tempEventStatus = null;
             }
         });
     }
@@ -116,18 +115,6 @@ public class GameBoard extends JPanel {
         repaint();
     }
 
-    //gets the current event
-    public EventStatusEnum getEvent()
-    {
-        return event;
-    }
-
-    //sets the current event to null
-    public void setEventNull()
-    {
-        event = null;
-    }
-
     /**
      * Updates the JLabel to reflect the current state of the game.
      */
@@ -137,7 +124,7 @@ public class GameBoard extends JPanel {
             if (o.getPass())
             {
                 status.setText("WHITE must pass | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-                event = EventStatusEnum.PASS_WHITE;
+                tempEventStatus = EventStatusEnum.PASS_WHITE;
             }
             else {
                 status.setText("BLACK's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
@@ -146,7 +133,7 @@ public class GameBoard extends JPanel {
             if (o.getPass())
             {
                 status.setText("BLACK must pass | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-                event = EventStatusEnum.PASS_BLACK;
+                tempEventStatus = EventStatusEnum.PASS_BLACK;
             }
             else {
                 status.setText("WHITE's Turn | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
@@ -156,13 +143,13 @@ public class GameBoard extends JPanel {
         PlayerColor winner = o.checkWinner();
         if (winner == PlayerColor.BLACK) {
             status.setText("BLACK wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-            event = EventStatusEnum.WIN_BLACK; //win event declared
+            tempEventStatus = EventStatusEnum.WIN_BLACK; //win event declared
         } else if (winner == PlayerColor.WHITE) {
             status.setText("WHITE wins!!! | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-            event = EventStatusEnum.WIN_WHITE; //win event declared
+            tempEventStatus = EventStatusEnum.WIN_WHITE; //win event declared
         } else if (winner == PlayerColor.EMPTY) {
             status.setText("It's a tie | B: " + o.getBlackPoints() + ", W: " + o.getWhitePoints());
-            event = EventStatusEnum.TIE; //tie event declared
+            tempEventStatus = EventStatusEnum.TIE; //tie event declared
         }
     }
 
