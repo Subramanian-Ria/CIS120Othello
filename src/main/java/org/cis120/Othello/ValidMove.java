@@ -1,41 +1,27 @@
 package org.cis120.Othello;
+
 import java.util.LinkedHashSet;
 
-public class ValidMove implements Comparable<ValidMove>{
+public class ValidMove implements Comparable<ValidMove> {
     private final int x;
     private final int y;
     private final LinkedHashSet<int[]> flippedDisks;
-    public ValidMove(int xParam, int yParam, LinkedHashSet<int[]> flippedParam)
-    {
+
+    public ValidMove(int xParam, int yParam, LinkedHashSet<int[]> flippedParam) {
         x = xParam;
         y = yParam;
         flippedDisks = flippedParam;
     }
 
-    public int getX()
-    {
+    public int getX() {
         return x;
     }
 
-    public int getY()
-    {
+    public int getY() {
         return y;
     }
 
-    public boolean contains(int[] pos)
-    {
-        for (int[] disk : flippedDisks)
-        {
-            if (disk[0] == pos[0] && disk[1] == pos[1])
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public LinkedHashSet<int[]> getFlippedDisks()
-    {
+    public LinkedHashSet<int[]> getFlippedDisks() {
         return new LinkedHashSet<>(flippedDisks);
     }
 
@@ -43,25 +29,19 @@ public class ValidMove implements Comparable<ValidMove>{
     public int compareTo(ValidMove o) {
         if (this.x > o.getX()) {
             return 1;
-        }
-        else if (this.x < o.getX())
-        {
+        } else if (this.x < o.getX()) {
             return -1;
-        }
-        else
-        {
+        } else {
             return Integer.compare(this.y, o.getY());
         }
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null)
-        {
+        if (obj == null) {
             return false;
         }
-        if (obj.getClass() != ValidMove.class)
-        {
+        if (obj.getClass() != ValidMove.class) {
             return false;
         }
         ValidMove v = (ValidMove) obj;

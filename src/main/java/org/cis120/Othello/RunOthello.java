@@ -14,7 +14,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Observer;
 
 /**
  * This class sets up the top-level frame and widgets for the GUI.
@@ -45,11 +44,13 @@ public class RunOthello implements Runnable {
         final JLabel status = new JLabel("Setting up...");
         status_panel.add(status);
 
+        // event status object
         EventStatus eventStatus = new EventStatus();
 
         // Game board
         final GameBoard board = new GameBoard(status, eventStatus);
-        //sets background to green like classic othello boards
+
+        // sets background to green like classic othello boards
         Color boardColor = new Color(50, 130, 50);
         board.setBackground(boardColor);
         frame.add(board, BorderLayout.CENTER);
@@ -63,55 +64,54 @@ public class RunOthello implements Runnable {
         // ActionListener with its actionPerformed() method overridden. When the
         // button is pressed, actionPerformed() will be called.
         final JButton reset = new JButton("Reset");
-        reset.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                board.reset();
-            }
-        });
+        reset.addActionListener(e -> board.reset());
 
-        //save button
+        // save button
         final JButton save = new JButton("Save");
         save.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                try
-                {
+                try {
                     board.saveGameBoard();
                     JOptionPane.showMessageDialog(frame, "Saved at " + board.getFileString());
-                }
-                catch (FileNotFoundException exception)
-                {
-                    JOptionPane.showMessageDialog(frame, "File Note Found", "Error", JOptionPane.ERROR_MESSAGE);
-                    //File Not Found exception will alert the user
-                }
-                catch (IOException exception)
-                {
-                    JOptionPane.showMessageDialog(frame, "IO Exception", "Error", JOptionPane.ERROR_MESSAGE);
-                //IOException will give an error dialogue to the user
+                } catch (FileNotFoundException exception) {
+                    JOptionPane.showMessageDialog(
+                            frame, "File Note Found", "Error", JOptionPane.ERROR_MESSAGE
+                    );
+                    // File Not Found exception will alert the user
+                } catch (IOException exception) {
+                    JOptionPane.showMessageDialog(
+                            frame, "IO Exception", "Error", JOptionPane.ERROR_MESSAGE
+                    );
+                    // IOException will give an error dialogue to the user
                 }
             }
         });
 
-        //load button
-        //allows user to specify filepath
+        // load button
+        // allows user to specify filepath
         final JButton load = new JButton("Load");
         load.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                try
-                {
+                try {
                     String filepath = JOptionPane.showInputDialog(frame, "Enter filepath");
                     board.loadGameBoard(filepath);
-                }
-                catch (FileNotFoundException exception)
-                {
-                    JOptionPane.showMessageDialog(frame, "File Not Found", "Error", JOptionPane.ERROR_MESSAGE);
-                    //file not found exception will alert the user
-                }
-                catch (IOException exception)
-                {
-                    //IO exception will alert the user with an error dialogue
-                    JOptionPane.showMessageDialog(frame, "IO Exception", "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (FileNotFoundException exception) {
+                    JOptionPane.showMessageDialog(
+                            frame, "File Not Found", "Error", JOptionPane.ERROR_MESSAGE
+                    );
+                    // file not found exception will alert the user
+                } catch (IOException exception) {
+                    // IO exception will alert the user with an error dialogue
+                    JOptionPane.showMessageDialog(
+                            frame, "IO Exception", "Error", JOptionPane.ERROR_MESSAGE
+                    );
+                } catch (IllegalArgumentException exception) {
+                    // ILLEGAL ARG Exception indicates improper file formatting
+                    JOptionPane.showMessageDialog(
+                            frame, "Improper File Formatting", "Error", JOptionPane.ERROR_MESSAGE
+                    );
                 }
             }
         });
@@ -120,57 +120,50 @@ public class RunOthello implements Runnable {
         control_panel.add(save);
         control_panel.add(load);
 
+        // event listener inner class
+        // listens to the event status object for any changes and if they are detected
+        // then displays option frames with messages for the user
         class EventStatusListener implements PropertyChangeListener {
 
             @Override
-            public void propertyChange(PropertyChangeEvent event)
-            {
-                if (event.getPropertyName().equals("EventStatus"))
-                {
-                    System.out.println("HI");
+            public void propertyChange(PropertyChangeEvent event) {
+                if (event.getPropertyName().equals("EventStatus")) {
                     EventStatus eventSource = (EventStatus) event.getSource();
                     EventStatusEnum eventValue = (EventStatusEnum) event.getNewValue();
-                    if (eventValue == EventStatusEnum.ERROR)
-                    {
-                        JOptionPane.showMessageDialog(frame, "Invalid Move", "Error", JOptionPane.ERROR_MESSAGE);
+                    if (eventValue == EventStatusEnum.ERROR) {
+                        JOptionPane.showMessageDialog(
+                                frame, "Invalid Move", "Error", JOptionPane.ERROR_MESSAGE
+                        );
                         eventSource.setEventNull();
-                    }
-                    else if (eventValue == EventStatusEnum.WIN_BLACK)
-                    {
+                    } else if (eventValue == EventStatusEnum.WIN_BLACK) {
                         optionPane("BLACK Wins!", frame);
                         eventSource.setEventNull();
-                    }
-                    else if (eventValue == EventStatusEnum.WIN_WHITE)
-                    {
+                    } else if (eventValue == EventStatusEnum.WIN_WHITE) {
                         optionPane("WHITE Wins!", frame);
                         eventSource.setEventNull();
-                    }
-                    else if (eventValue == EventStatusEnum.TIE)
-                    {
+                    } else if (eventValue == EventStatusEnum.TIE) {
                         optionPane("It's a Tie!", frame);
                         eventSource.setEventNull();
-                    }
-                    else if (eventValue == EventStatusEnum.PASS_BLACK)
-                    {
+                    } else if (eventValue == EventStatusEnum.PASS_BLACK) {
                         optionPane("BLACK must pass their turn", frame);
                         eventSource.setEventNull();
                         board.passStatus();
-                    }
-                    else if (eventValue == EventStatusEnum.PASS_WHITE) {
+                    } else if (eventValue == EventStatusEnum.PASS_WHITE) {
                         optionPane("WHITE must pass their turn", frame);
                         eventSource.setEventNull();
                         board.passStatus();
                     }
                 }
+                board.boardUpdate();
             }
 
-            //helper method so i don't have to write JOptionPane a lot
-            private void optionPane(String msg, JFrame frame)
-            {
+            // helper method so i don't have to write JOptionPane a lot
+            private void optionPane(String msg, JFrame frame) {
                 JOptionPane.showMessageDialog(frame, msg);
             }
         }
 
+        // instantiates listener and adds it to the event status object
         EventStatusListener listener = new EventStatusListener();
         eventStatus.addPropertyChangeListener(listener);
 
