@@ -67,7 +67,7 @@ public class GameBoard extends JPanel {
                 Point p = e.getPoint();
 
                 try { // if play turn fails an invalid move was played
-                    // updates the model given the coordinates of the mouseclick
+                      // updates the model given the coordinates of the mouseclick
                     o.playTurn(p.x / 75, p.y / 75, o.getCurrentTurn());
                     boardUpdate(); // repaints the game board and updates status
                 } catch (IllegalArgumentException exception) {
@@ -112,6 +112,7 @@ public class GameBoard extends JPanel {
         tempEventStatus = null; // resets the temp event holder
     }
 
+    // shortcut to update status and repaint board
     public void boardUpdate() {
         updateStatus();
         repaint();
