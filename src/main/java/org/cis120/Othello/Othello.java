@@ -193,6 +193,10 @@ public class Othello {
             throw new IllegalArgumentException();
         }
 
+        if (x > 7 || y > 7 || x < 0 || y < 0) {
+            throw new IllegalArgumentException();
+        }
+
         // loads correct valid moves tree
         TreeSet<ValidMove> moves;
         if (player == PlayerColor.BLACK) {
@@ -340,6 +344,9 @@ public class Othello {
      *         which can be displayed by the GUI
      **/
     public PlayerColor getBoardSpace(int x, int y) {
+        if (x > 7 || y > 7 || x < 0 || y < 0) {
+            throw new IllegalArgumentException();
+        }
         PlayerColor space = board[x][y];
         if (space != PlayerColor.EMPTY) {
             return space;
@@ -392,7 +399,9 @@ public class Othello {
                     bw.write("*");
                 }
             }
-            bw.newLine();
+            if (i < board.length - 1) {
+                bw.newLine();
+            }
         }
         bw.flush();
         bw.close();
@@ -419,7 +428,14 @@ public class Othello {
         }
         while ((c = br.read()) != -1) {
             char disk = (char) c;
-            if (disk == 'X') {
+            if (x == 8) {
+                x = 0;
+                y++;
+            } else if (x > 8) {
+                throw new IllegalArgumentException();
+            } else if (y > 7) {
+                throw new IllegalArgumentException();
+            } else if (disk == 'X') {
                 boardTemp[x][y] = PlayerColor.BLACK;
                 x++;
             } else if (disk == 'O') {
@@ -428,9 +444,6 @@ public class Othello {
             } else if (disk == '*') {
                 boardTemp[x][y] = PlayerColor.EMPTY;
                 x++;
-            } else if (x == 8) {
-                y++;
-                x = 0;
             }
         }
         for (PlayerColor[] spaces : boardTemp) {

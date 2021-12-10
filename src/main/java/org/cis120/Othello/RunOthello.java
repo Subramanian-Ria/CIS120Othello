@@ -66,6 +66,7 @@ public class RunOthello implements Runnable {
         final JButton reset = new JButton("Reset");
         reset.addActionListener(e -> board.reset());
 
+        // TODO: Instructions
         // save button
         final JButton save = new JButton("Save");
         save.addActionListener(new ActionListener() {
