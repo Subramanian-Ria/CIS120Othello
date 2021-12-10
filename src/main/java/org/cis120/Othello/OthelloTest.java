@@ -195,8 +195,8 @@ public class OthelloTest {
     public void loadInvalidCharactersTest() {
         o.reset();
         assertThrows(
-                IllegalArgumentException.class,
-                () -> o.loadFile("files/input/invalidCharacters.txt")
+                IllegalArgumentException.class, () ->
+                        o.loadFile("files/input/invalidCharacters.txt")
         );
     }
 

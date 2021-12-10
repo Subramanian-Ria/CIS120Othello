@@ -38,6 +38,9 @@ public class RunOthello implements Runnable {
         final JFrame frame = new JFrame("Othello");
         frame.setLocation(330, 15);
 
+        // prevents the window from being resizable
+        frame.setResizable(false);
+
         // Status panel
         final JPanel status_panel = new JPanel();
         frame.add(status_panel, BorderLayout.SOUTH);
@@ -66,7 +69,46 @@ public class RunOthello implements Runnable {
         final JButton reset = new JButton("Reset");
         reset.addActionListener(e -> board.reset());
 
-        // TODO: Instructions
+        // Instructions button
+        // Displays instructions for the user
+        final JButton instructions = new JButton("Instructions");
+
+        instructions.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(
+                        frame, "I implemented the board game Othello/Reversi\n" +
+                                "Two players, Black and White, take turns placing disks in " +
+                                "empty places on the board by clicking in the squares of the " +
+                                "board \n"
+                                +
+                                "A move is valid if it \"outflanks\" or surrounds some disks of " +
+                                "the opposite color. These moves are highlighted with circle " +
+                                "outlines\n"
+                                +
+                                "When such a move is made then the flanked disks are flipped to " +
+                                "the opposite color\n"
+                                +
+                                "If no valid moves are available then a player must pass their " +
+                                "turn\n"
+                                +
+                                "Players cannot pass their turn if they have moves available\n" +
+                                "Once neither player can move then the game is over\n" +
+                                "The winner is the player with the most disks in their color " +
+                                "at the end of the game\n"
+                                +
+                                "The game has a reset button to restart and saving and loading " +
+                                "functionalities to save and load a game\n"
+                                +
+                                "Current points and the current turn are displayed in the status " +
+                                "bar at the bottom of the screen\n"
+                                +
+                                "The window cannot be resized to maintain the correct dimensions " +
+                                "of the gameboard"
+                );
+            }
+        });
+
         // save button
         final JButton save = new JButton("Save");
         save.addActionListener(new ActionListener() {
@@ -120,6 +162,7 @@ public class RunOthello implements Runnable {
         control_panel.add(reset);
         control_panel.add(save);
         control_panel.add(load);
+        control_panel.add(instructions);
 
         // event listener inner class
         // listens to the event status object for any changes and if they are detected
